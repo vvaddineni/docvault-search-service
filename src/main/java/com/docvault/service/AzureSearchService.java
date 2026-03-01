@@ -84,7 +84,7 @@ public class AzureSearchService {
         List<SearchResultItem> items = new ArrayList<>();
         results.forEach(r -> {
             SearchResultItem item = new SearchResultItem();
-            Map<String, Object> doc = r.getDocument(Map.class);
+            SearchDocument doc = r.getDocument(SearchDocument.class);
             item.setId((String) doc.get("id"));
             item.setTitle((String) doc.get("title"));
             item.setAuthor((String) doc.get("author"));
@@ -93,7 +93,7 @@ public class AzureSearchService {
             item.setMimeType((String) doc.get("mimeType"));
             item.setFileSizeBytes(doc.get("fileSizeBytes") instanceof Number n ? n.longValue() : 0);
             item.setUploadedAt((String) doc.get("uploadedAt"));
-            item.setScore(r.getScore());
+            item.setScore(r.getScore() != null ? r.getScore() : 0.0);
             if (r.getHighlights() != null) {
                 item.setHighlights(r.getHighlights());
             }
@@ -125,7 +125,7 @@ public class AzureSearchService {
                     .setTop(8).setHighlightPreTag("").setHighlightPostTag("");
             return searchClient.suggest(prefix, "docvault-suggester", opts, null)
                     .stream()
-                    .map(r -> (String) r.getDocument(Map.class).get("title"))
+                    .map(r -> (String) r.getDocument(SearchDocument.class).get("title"))
                     .filter(Objects::nonNull)
                     .toList();
         } catch (Exception e) {
