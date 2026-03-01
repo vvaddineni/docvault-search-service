@@ -1,8 +1,5 @@
 package com.docvault.dto;
 
-import java.util.List;
-import java.util.Map;
-
 public class SearchRequestDto {
     private String q;
     private String department;
