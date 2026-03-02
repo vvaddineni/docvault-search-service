@@ -3,6 +3,9 @@ package com.docvault.service;
 import com.azure.search.documents.SearchClient;
 import com.azure.search.documents.SearchClientBuilder;
 import com.azure.search.documents.SearchDocument;
+import com.azure.search.documents.indexes.SearchIndexClient;
+import com.azure.search.documents.indexes.SearchIndexClientBuilder;
+import com.azure.search.documents.indexes.models.*;
 import com.azure.search.documents.models.*;
 import com.azure.core.credential.AzureKeyCredential;
 import com.docvault.dto.SearchRequestDto;
@@ -39,12 +42,48 @@ public class AzureSearchService {
 
     @PostConstruct
     public void init() {
+        AzureKeyCredential credential = new AzureKeyCredential(apiKey);
+
+        // Create index if it doesn't exist
+        SearchIndexClient indexClient = new SearchIndexClientBuilder()
+                .endpoint(endpoint)
+                .credential(credential)
+                .buildClient();
+        ensureIndex(indexClient);
+
         searchClient = new SearchClientBuilder()
                 .endpoint(endpoint)
-                .credential(new AzureKeyCredential(apiKey))
+                .credential(credential)
                 .indexName(indexName)
                 .buildClient();
         log.info("[Search] SearchClient ready → {} / {}", endpoint, indexName);
+    }
+
+    private void ensureIndex(SearchIndexClient indexClient) {
+        try {
+            indexClient.getIndex(indexName);
+            log.info("[Search] Index '{}' already exists", indexName);
+        } catch (Exception e) {
+            log.info("[Search] Creating index '{}'…", indexName);
+            SearchIndex index = new SearchIndex(indexName, List.of(
+                new SearchField("id",            SearchFieldDataType.STRING).setKey(true).setFilterable(true),
+                new SearchField("title",         SearchFieldDataType.STRING).setSearchable(true).setFilterable(true).setSortable(true),
+                new SearchField("author",        SearchFieldDataType.STRING).setSearchable(true).setFilterable(true),
+                new SearchField("department",    SearchFieldDataType.STRING).setSearchable(true).setFilterable(true).setFacetable(true),
+                new SearchField("description",   SearchFieldDataType.STRING).setSearchable(true),
+                new SearchField("extractedText", SearchFieldDataType.STRING).setSearchable(true),
+                new SearchField("mimeType",      SearchFieldDataType.STRING).setFilterable(true).setFacetable(true),
+                new SearchField("storageTier",   SearchFieldDataType.STRING).setFilterable(true).setFacetable(true),
+                new SearchField("fileSizeBytes", SearchFieldDataType.INT64).setFilterable(true).setSortable(true),
+                new SearchField("uploadedAt",    SearchFieldDataType.DATE_TIME_OFFSET).setFilterable(true).setSortable(true),
+                new SearchField("tags",          SearchFieldDataType.collection(SearchFieldDataType.STRING)).setSearchable(true).setFilterable(true)
+            ));
+            index.setSuggesters(List.of(
+                new SearchSuggester("docvault-suggester", List.of("title", "author"))
+            ));
+            indexClient.createIndex(index);
+            log.info("[Search] Index '{}' created", indexName);
+        }
     }
 
     // ── Full-text search ──────────────────────────────────────────────────
