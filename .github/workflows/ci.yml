@@ -88,7 +88,7 @@ jobs:
           if [ -n "$SRCH_ENDPOINT" ] && [ -n "$SRCH_KEY" ]; then
             az containerapp update \
               --name docvault-search-service \
-              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --resource-group docvault-rg \
               --set-env-vars \
                 AZURE_SEARCH_ENDPOINT="$SRCH_ENDPOINT" \
                 AZURE_SEARCH_API_KEY="$SRCH_KEY"
