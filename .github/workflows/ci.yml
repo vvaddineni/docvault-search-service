@@ -73,6 +73,7 @@ jobs:
         with:
           containerAppName: docvault-search-service
           resourceGroup: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          containerAppEnvironment: docvault-env
           imageToDeploy: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           registryUrl: ${{ env.REGISTRY }}
           registryUsername: ${{ github.actor }}
