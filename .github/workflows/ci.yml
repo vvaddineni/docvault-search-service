@@ -76,3 +76,21 @@ jobs:
           registryUrl: ${{ env.REGISTRY }}
           registryUsername: ${{ github.actor }}
           registryPassword: ${{ secrets.GHCR_TOKEN }}
+          targetPort: 8081
+
+      - name: Set service config on Search Service Container App
+        env:
+          SRCH_ENDPOINT: ${{ secrets.AZURE_SEARCH_ENDPOINT }}
+          SRCH_KEY: ${{ secrets.AZURE_SEARCH_API_KEY }}
+        run: |
+          if [ -n "$SRCH_ENDPOINT" ] && [ -n "$SRCH_KEY" ]; then
+            az containerapp update \
+              --name docvault-search-service \
+              --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+              --set-env-vars \
+                AZURE_SEARCH_ENDPOINT="$SRCH_ENDPOINT" \
+                AZURE_SEARCH_API_KEY="$SRCH_KEY"
+            echo "Search config updated"
+          else
+            echo "::warning::AZURE_SEARCH_ENDPOINT or AZURE_SEARCH_API_KEY not set — skipping"
+          fi
